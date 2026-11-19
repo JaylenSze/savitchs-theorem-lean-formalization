@@ -16,3 +16,5 @@ import Savitch.TM.Counter
 import Savitch.TM.Track
 import Savitch.TM.Input
 import Savitch.Machine.Next
+import Savitch.TM.Layout
+import Savitch.Edge.Build

@@ -64,6 +64,8 @@ Savitch/
   TM/Counter.lean           binary decrement and zero test
   TM/Track.lean             copying through a symbol map; in-place lockstep zip
   TM/Input.lean             counters with a home cell; position-tracked input head (inRight, inLeft, seekIn)
+  TM/Layout.lean            block layout and whole-block copy / zip passes
+  Edge/Build.lean           the Savitch TM alphabet; building a successor's encoding on tape
   Space/Generic.lean        the Phase 2 stack machine over any Fin N (correctness, stack depth)
   Machine/Encode.lean       total record encoding of configurations, acceptance as vertex reachability
   Machine/Next.lean         successor function nextB; generated-edge graph; accepts_iff_gen
