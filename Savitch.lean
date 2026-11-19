@@ -8,3 +8,6 @@ import Savitch.TM.Prog
 import Savitch.TM.Block
 import Savitch.TM.Macros
 import Savitch.TM.Binary
+import Savitch.Space.Generic
+import Savitch.Machine.Encode
+import Savitch.TM.Digits
