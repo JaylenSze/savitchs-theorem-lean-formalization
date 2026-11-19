@@ -26,7 +26,7 @@ An attempted formalization of **Savitch's theorem**:
 | 2. Space-accounted machine | `Space.savitch_machine`: an explicit stack machine decides reachability on `2^w` vertices using at most `(w+1)(4w+1)` bits | `Savitch/Space/StackMachine.lean` |
 | 3. NTMs and `NSPACE` | `NTM.accepts_iff_cfgGraph_Cs`: acceptance by an `s`-space NTM is reachability in a configuration graph on `2^(C·s)` vertices | `Savitch/Machine/NTM.lean` |
 | 4a. Main theorem (oracle-relative) | `savitch_relative` | `Savitch/Main.lean` |
-| 4b. True `DSPACE` | **not done** | — |
+| 4b. True `DSPACE` via Turing machines | **in progress**: DTM model, `DSPACE`, a tape assembly language proved to compile to DTMs (`Code.mem_DSPACE`), and verified `seq` / `ifElse` / `whileDo` combinators. The Savitch TM itself is not written yet | `Savitch/TM/` |
 
 ### What is actually proved
 
@@ -41,7 +41,7 @@ This is **not yet the full theorem**:
 
 1. **Oracle cost.** Each query to the step-relation oracle is free. A complete proof must show that each query (decode two configurations, check the transition table) takes `O(s)` space.
 2. **Space constructibility.** The deterministic machine is handed the configuration width; it does not compute it itself.
-3. **No `DSPACE` class yet.** `DSPACE` has to be defined over a restricted deterministic model, either Turing machines or a register machine, and the algorithm compiled to it.
+3. **The Savitch Turing machine isn't built yet.** `DSPACE` is now defined over deterministic multi-tape Turing machines (`Savitch/TM/DTM.lean`), but the program that runs Savitch's algorithm on tapes, and its proof, are still to do (see the Phase 4b roadmap in `PLAN.md`).
 
 See [`PLAN.md`](PLAN.md) for the full design, the design decisions made so far, and the remaining work.
 
@@ -54,6 +54,9 @@ Savitch/
   Space/StackMachine.lean   explicit stack machine, bit-level space measure, O(w²) bound
   Machine/NTM.lean          NTM model, NSPACE, configuration counting and encoding
   Main.lean                 sink reduction, oracle, `savitch_relative`
+  TM/DTM.lean               deterministic multi-tape TMs, DSPACE
+  TM/Prog.lean              tape assembly language, compiled to DTMs (`Code.mem_DSPACE`)
+  TM/Block.lean             verified composition: seq, ifElse, whileDo, space bounds
 PLAN.md                     design plan and progress notes
 ```
 

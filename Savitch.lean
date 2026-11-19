@@ -3,3 +3,6 @@ import Savitch.Reach.Recursive
 import Savitch.Space.StackMachine
 import Savitch.Machine.NTM
 import Savitch.Main
+import Savitch.TM.DTM
+import Savitch.TM.Prog
+import Savitch.TM.Block

@@ -17,7 +17,21 @@ The proof has one mathematical core, the midpoint recursion for reachability. Mo
 | 2 Space-accounted machine | ✅ `Space.savitch_machine`: decides reachability on `2^w` vertices in ≤ `(w+1)(4w+1)` bits | `Savitch/Space/StackMachine.lean` |
 | 3 NTM + NSPACE | ✅ `NTM.accepts_iff_cfgGraph_Cs`: acceptance ↔ reachability in a config graph on `Fin (2^(C·s))`; `card_BCfg_le`, `reachable_good` | `Savitch/Machine/NTM.lean` |
 | 4a Final theorem, oracle-relative | ✅ `Savitch.savitch_relative` | `Savitch/Main.lean` |
-| 4b Pay for the oracle → real `DSPACE` | not started | |
+| 4b Real `DSPACE` via Turing machines | 🚧 foundations done (4b-1); see roadmap below | `Savitch/TM/` |
+
+### Phase 4b roadmap (Turing machines chosen)
+
+| Step | Content | Status |
+|---|---|---|
+| 4b-1 | `DTM` (read-only input + `k` work tapes), `DSPACE`; tape assembly language; `Code.mem_DSPACE` (programs are DTMs, via a step-for-step simulation); verified `seq` / `ifElse` / `whileDo` with space bounds; `Seg.reachable` | ✅ |
+| 4b-2 | Primitive macros with `Spec`s: rewind to the left-end marker, scan, copy a block between tapes, compare blocks, increment a mixed-radix block, unary counters | next |
+| 4b-3 | Data layout: an `M`-configuration is a block of `L` cells over a product alphabet (`Γ_M` symbol, head flag, one bit of the input-head position, state slot); a stack tape of frames `(a, b, c, phase)`; recursion depth stored as the head position on a unary depth tape | |
+| 4b-4 | Edge-test program: check that two blocks are valid configurations, move the input head to the binary-encoded position, check that some move in `δ` relates them; prove it equals `M.BStep` | |
+| 4b-5 | The Savitch program. Prove it **refines the Phase 2 stack machine** (an abstraction map from tapes to `Space.State`), so correctness and the `O(w²)` bound come from Phase 2 instead of being re-proved | |
+| 4b-6 | Choosing `L`: start at `bits(n+2)` (count the input) and use the "iterate `L` until nothing exceeds it" trick, which needs no constructibility hypothesis. Fallback: assume constructibility | |
+| 4b-7 | Final theorem `NSPACE s ⊆ DSPACE (s²)` for `s ≥ log n` | |
+
+Model notes: `DTM` has `k` work tapes; a left move at cell 0 stays put; the space bound is that every work head stays below `c·(f n + 1)`, so at most `k·c·(f n+1)` cells are used. Programs execute one tape action per step. Jumps are relative, so blocks concatenate without relocation.
 
 **What `savitch_relative` says.** Assume `log n ≤ s n` and `L ∈ NSPACE s`. Then there is an NTM `M` for `L` and a constant `K` such that, on every `x`, the Phase 2 deterministic machine querying **`M`'s own configuration-graph oracle** halts with the answer to `x ∈ L`. Every state it passes through has at most `K·(s|x|+1)²` bits. Many accepting configurations are reduced to one target by adding a sink vertex, at the cost of one extra bit.
 
