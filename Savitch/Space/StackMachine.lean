@@ -348,4 +348,64 @@ theorem savitch_machine (a b : Fin (2 ^ w)) :
     simp only [levelCost]
     omega
 
+/-! ### Stack depth: at most `K` frames -/
+
+/-- Frames are stacked with consecutive levels: the top frame of a stack of
+length `ℓ` stores level `K - ℓ`. -/
+def StackOK (K : ℕ) : List (Frame w) → Prop
+  | [] => True
+  | f :: st => f.k + (st.length + 1) = K ∧ StackOK K st
+
+/-- The depth invariant of a run started at `init K a b`. -/
+def DepthInv (K : ℕ) : State w → Prop
+  | .call k _ _ st => StackOK K st ∧ k + st.length = K
+  | .ret _ st => StackOK K st
+  | .done _ => True
+
+def State.stack : State w → List (Frame w)
+  | .call _ _ _ st => st
+  | .ret _ st => st
+  | .done _ => []
+
+theorem depthInv_advance {K k : ℕ} {a b c : Fin (2 ^ w)} {st : List (Frame w)}
+    (h : k + (st.length + 1) = K) (hst : StackOK K st) : DepthInv K (advance k a b c st) := by
+  unfold advance
+  split_ifs
+  · exact ⟨⟨h, hst⟩, h⟩
+  · exact hst
+
+theorem depthInv_step {K : ℕ} : ∀ {s : State w}, DepthInv K s → DepthInv K (step E s)
+  | .call 0 _ _ _, h => h.1
+  | .call (k + 1) _ _ st, h => by
+    obtain ⟨h₁, h₂⟩ := h
+    refine ⟨⟨?_, h₁⟩, ?_⟩ <;> simp only [List.length_cons] <;> omega
+  | .ret _ [], _ => trivial
+  | .ret true (⟨_, _, _, _, .left⟩ :: _), h => ⟨⟨h.1, h.2⟩, h.1⟩
+  | .ret false (⟨_, _, _, _, .left⟩ :: _), h => depthInv_advance h.1 h.2
+  | .ret true (⟨_, _, _, _, .right⟩ :: _), h => h.2
+  | .ret false (⟨_, _, _, _, .right⟩ :: _), h => depthInv_advance h.1 h.2
+  | .done _, _ => trivial
+
+theorem stackOK_length {K : ℕ} : ∀ {st : List (Frame w)}, StackOK K st → st.length ≤ K
+  | [], _ => Nat.zero_le _
+  | _ :: _, h => by simp only [List.length_cons]; have := h.1; omega
+
+theorem depthInv_stack_le {K : ℕ} {s : State w} (h : DepthInv K s) : s.stack.length ≤ K := by
+  cases s with
+  | call _ _ _ st => exact stackOK_length h.1
+  | ret _ st => exact stackOK_length h
+  | done _ => exact Nat.zero_le _
+
+/-- **Stack depth.** Every state reachable from `init K a b` has at most `K` frames,
+and every frame on it stores a level `< K`. -/
+theorem reachable_depthInv (K : ℕ) (a b : Fin (2 ^ w)) {s : State w}
+    (hs : Relation.ReflTransGen (StepRel E) (init K a b) s) : DepthInv K s := by
+  induction hs with
+  | refl => exact ⟨trivial, by simp⟩
+  | tail _ hst ih => exact hst ▸ depthInv_step E ih
+
+theorem reachable_stack_le (K : ℕ) (a b : Fin (2 ^ w)) {s : State w}
+    (hs : Relation.ReflTransGen (StepRel E) (init K a b) s) : s.stack.length ≤ K :=
+  depthInv_stack_le (reachable_depthInv E K a b hs)
+
 end Savitch.Space
