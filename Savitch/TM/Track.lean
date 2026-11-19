@@ -174,4 +174,174 @@ theorem Spec.copyMapWhile (hab : a ≠ b) (p : Γ → Bool) (h : Γ → Γ) :
 
 end Copy
 
+/-! ### In-place lockstep zip: `a := F a b` -/
+
+/-- Tapes after `m` zip steps: cells of `a` from its head become `F (a cell) (b cell)`,
+and both heads advance by `m`. -/
+def Tapes.zipRes (T : Tapes k Γ) (a b : Fin k) (F : Γ → Γ → Γ) (m : ℕ) : Tapes k Γ where
+  ih := T.ih
+  hd := Function.update (Function.update T.hd a (T.hd a + m)) b (T.hd b + m)
+  tp := Function.update T.tp a (fun j =>
+    if T.hd a ≤ j ∧ j < T.hd a + m then F (T.tp a j) (T.tp b (T.hd b + (j - T.hd a)))
+    else T.tp a j)
+
+def Tapes.zipStep (T : Tapes k Γ) (a b : Fin k) (F : Γ → Γ → Γ) : Tapes k Γ :=
+  ((T.write a (F (T.read a) (T.read b))).setHead a (T.hd a + 1)).setHead b (T.hd b + 1)
+
+section Zip
+
+variable {F : Γ → Γ → Γ}
+
+theorem Tapes.zipRes_zero (T : Tapes k Γ) : T.zipRes a b F 0 = T := by
+  ext i
+  · rfl
+  · by_cases hb : i = b
+    · subst hb; simp [zipRes]
+    · by_cases ha : i = a
+      · subst ha; simp [zipRes]
+      · simp [zipRes]
+  · rename_i j
+    by_cases ha : i = a
+    · subst ha
+      simp only [zipRes, Function.update_self]
+      split_ifs with h'
+      · omega
+      · rfl
+    · simp [zipRes, ha]
+
+theorem Tapes.zipStep_hd_a (hab : a ≠ b) (T : Tapes k Γ) :
+    (T.zipStep a b F).hd a = T.hd a + 1 := by
+  simp [zipStep, setHead, hab]
+
+theorem Tapes.zipStep_hd_b (T : Tapes k Γ) : (T.zipStep a b F).hd b = T.hd b + 1 := by
+  simp [zipStep, setHead]
+
+theorem Tapes.zipStep_tp_b (hab : a ≠ b) (T : Tapes k Γ) :
+    (T.zipStep a b F).tp b = T.tp b := by
+  simp [zipStep, write, Ne.symm hab]
+
+theorem Tapes.zipStep_tp_a_ge (T : Tapes k Γ) {j : ℕ} (hj : T.hd a < j) :
+    (T.zipStep a b F).tp a j = T.tp a j := by
+  simp [zipStep, write, show j ≠ T.hd a by omega]
+
+theorem Tapes.zipRes_succ (hab : a ≠ b) (T : Tapes k Γ) (m : ℕ) :
+    (T.zipStep a b F).zipRes a b F m = T.zipRes a b F (m + 1) := by
+  ext i
+  · rfl
+  · simp only [zipRes, zipStep, setHead, write, Function.update_apply]
+    split_ifs <;> omega
+  · rename_i j
+    by_cases ha : i = a
+    · subst ha
+      simp only [zipRes, zipStep, setHead, write, read, Function.update_apply, ite_true, hab,
+        ite_false, Ne.symm hab]
+      split_ifs <;> first | rfl | omega | (congr 2 <;> omega)
+    · simp [zipRes, zipStep, write, ha]
+
+theorem Tapes.within_zipStep {T : Tapes k Γ} (hT : T.Within B)
+    (ha : T.hd a + 1 < B) (hb : T.hd b + 1 < B) : (T.zipStep a b F).Within B :=
+  Tapes.within_setHead (Tapes.within_setHead (Tapes.within_write hT) ha) hb
+
+theorem Tapes.seg_zipRes (T : Tapes k Γ) (m : ℕ) :
+    seg ((T.zipRes a b F m).tp a) (T.hd a) m =
+      List.zipWith F (seg (T.tp a) (T.hd a) m) (seg (T.tp b) (T.hd b) m) := by
+  have key : ∀ (n i : ℕ), i + n ≤ m →
+      seg ((T.zipRes a b F m).tp a) (T.hd a + i) n =
+        List.zipWith F (seg (T.tp a) (T.hd a + i) n) (seg (T.tp b) (T.hd b + i) n) := by
+    intro n
+    induction n with
+    | zero => intro _ _; rfl
+    | succ n ih =>
+      intro i hi
+      simp only [seg, List.zipWith_cons_cons]
+      rw [show T.hd a + i + 1 = T.hd a + (i + 1) by omega,
+        show T.hd b + i + 1 = T.hd b + (i + 1) by omega, ih (i + 1) (by omega)]
+      congr 1
+      simp only [zipRes, Function.update_self]
+      rw [ite_pos' (by omega)]
+      congr 2; omega
+  simpa using key m 0 (by omega)
+
+theorem Tapes.zipRes_tp_ne {i : Fin k} (hi : i ≠ a) (T : Tapes k Γ) (m : ℕ) :
+    (T.zipRes a b F m).tp i = T.tp i := by
+  simp [zipRes, hi]
+
+theorem Tapes.zipRes_tp_a_out (T : Tapes k Γ) (m : ℕ) {j : ℕ} (hj : j < T.hd a ∨ T.hd a + m ≤ j) :
+    (T.zipRes a b F m).tp a j = T.tp a j := by
+  simp only [zipRes, Function.update_self]
+  rw [ite_neg' (by omega)]
+
+theorem Tapes.zipRes_hd_a (hab : a ≠ b) (T : Tapes k Γ) (m : ℕ) :
+    (T.zipRes a b F m).hd a = T.hd a + m := by
+  simp [zipRes, hab]
+
+theorem Tapes.zipRes_hd_b (T : Tapes k Γ) (m : ℕ) :
+    (T.zipRes a b F m).hd b = T.hd b + m := by
+  simp [zipRes]
+
+theorem Tapes.zipRes_hd_ne {i : Fin k} (hia : i ≠ a) (hib : i ≠ b) (T : Tapes k Γ) (m : ℕ) :
+    (T.zipRes a b F m).hd i = T.hd i := by
+  simp [zipRes, hia, hib]
+
+variable [DecidableEq Γ] [Fintype Γ]
+
+/-- Write `F (symbol under a) (symbol under b)` under head `a`. -/
+noncomputable def mapSym2 (a b : Fin k) (F : Γ → Γ → Γ) : Code k Γ :=
+  TM.cases a (fun g => TM.cases b (fun h => [Instr.write a (F g h)]) Finset.univ.toList)
+    Finset.univ.toList
+
+theorem Spec.mapSym2 (a b : Fin k) (F : Γ → Γ → Γ) {T : Tapes k Γ} (hT : T.Within B) :
+    Spec (TM.mapSym2 a b F) x B T (T.write a (F (T.read a) (T.read b))) :=
+  Spec.cases a _ _ (by simp) hT (Spec.cases b _ _ (by simp) hT (Spec.write hT))
+
+noncomputable def zipBody (a b : Fin k) (F : Γ → Γ → Γ) : Code k Γ :=
+  TM.mapSym2 a b F ++ [Instr.move a .right] ++ [Instr.move b .right]
+
+theorem Spec.zipBody (hab : a ≠ b) {T : Tapes k Γ} (hT : T.Within B)
+    (ha : T.hd a + 1 < B) (hb : T.hd b + 1 < B) :
+    Spec (TM.zipBody a b F) x B T (T.zipStep a b F) := by
+  have h1 := Spec.mapSym2 (x := x) a b F hT
+  have h2 := Spec.moveRight (x := x) (t := a)
+    (Tapes.within_write (g := F (T.read a) (T.read b)) (t := a) hT) (by simpa using ha)
+  have h3 := Spec.moveRight (x := x) (t := b)
+    (Tapes.within_setHead (n := T.hd a + 1) (t := a)
+      (Tapes.within_write (g := F (T.read a) (T.read b)) (t := a) hT) ha)
+    (by rw [Tapes.setHead_hd_ne _ _ (Ne.symm hab)]; simpa using hb)
+  rw [Tapes.setHead_hd_ne _ _ (Ne.symm hab), Tapes.write_hd] at h3
+  exact (h1.seq h2).seq h3
+
+/-- In-place zip: `a := F a b` cell by cell, both heads moving right, while `p`
+holds on tape `a`. -/
+noncomputable def zipWhile (a b : Fin k) (p : Γ → Bool) (F : Γ → Γ → Γ) : Code k Γ :=
+  whileDo (.tape a p) (TM.zipBody a b F)
+
+theorem Spec.zipWhile (hab : a ≠ b) (p : Γ → Bool) (F : Γ → Γ → Γ) :
+    ∀ (m : ℕ) (T : Tapes k Γ), (∀ j < m, p (T.tp a (T.hd a + j)) = true) →
+      p (T.tp a (T.hd a + m)) = false → T.Within B → T.hd a + m < B → T.hd b + m < B →
+      Spec (TM.zipWhile a b p F) x B T (T.zipRes a b F m) := by
+  intro m T hp hq hT hBa hBb
+  apply Spec.whileDo
+  induction m generalizing T with
+  | zero =>
+    rw [Tapes.zipRes_zero]
+    exact .stop (by simpa [Cond.eval, Tapes.read] using hq) hT
+  | succ m ih =>
+    refine .iter (by simpa [Cond.eval, Tapes.read] using hp 0 (by omega)) hT
+      (Spec.zipBody hab hT (by omega) (by omega)) ?_
+    rw [← Tapes.zipRes_succ hab]
+    apply ih
+    · intro j hj
+      rw [Tapes.zipStep_tp_a_ge _ (by rw [Tapes.zipStep_hd_a hab]; omega),
+        Tapes.zipStep_hd_a hab]
+      have := hp (j + 1) (by omega)
+      rwa [show T.hd a + (j + 1) = T.hd a + 1 + j by omega] at this
+    · rw [Tapes.zipStep_tp_a_ge _ (by rw [Tapes.zipStep_hd_a hab]; omega),
+        Tapes.zipStep_hd_a hab]
+      rwa [show T.hd a + (m + 1) = T.hd a + 1 + m by omega] at hq
+    · exact Tapes.within_zipStep hT (by omega) (by omega)
+    · rw [Tapes.zipStep_hd_a hab]; omega
+    · rw [Tapes.zipStep_hd_b]; omega
+
+end Zip
+
 end Savitch.TM

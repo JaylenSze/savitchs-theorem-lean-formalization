@@ -15,3 +15,4 @@ import Savitch.TM.Frame
 import Savitch.TM.Counter
 import Savitch.TM.Track
 import Savitch.TM.Input
+import Savitch.Machine.Next

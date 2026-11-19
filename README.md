@@ -62,10 +62,11 @@ Savitch/
   TM/Digits.lean            base-m digit blocks: value, increment, compare routines (vertices on tape)
   TM/Frame.lean             frame rule: code that does not touch a tape leaves it unchanged
   TM/Counter.lean           binary decrement and zero test
-  TM/Track.lean             copying through a symbol map (extracting a track from records)
+  TM/Track.lean             copying through a symbol map; in-place lockstep zip
   TM/Input.lean             counters with a home cell; position-tracked input head (inRight, inLeft, seekIn)
   Space/Generic.lean        the Phase 2 stack machine over any Fin N (correctness, stack depth)
   Machine/Encode.lean       total record encoding of configurations, acceptance as vertex reachability
+  Machine/Next.lean         successor function nextB; generated-edge graph; accepts_iff_gen
 PLAN.md                     design plan and progress notes
 ```
 
