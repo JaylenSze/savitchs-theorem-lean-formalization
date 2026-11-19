@@ -11,3 +11,7 @@ import Savitch.TM.Binary
 import Savitch.Space.Generic
 import Savitch.Machine.Encode
 import Savitch.TM.Digits
+import Savitch.TM.Frame
+import Savitch.TM.Counter
+import Savitch.TM.Track
+import Savitch.TM.Input

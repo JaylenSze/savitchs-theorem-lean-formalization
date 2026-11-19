@@ -86,6 +86,9 @@ theorem seg_length (f : ℕ → Γ) : ∀ s n, (seg f s n).length = n
 theorem ite_neg' {α : Type} {p : Prop} [Decidable p] (h : ¬p) (a b : α) :
     (if p then a else b) = b := by simp [h]
 
+theorem ite_pos' {α : Type} {p : Prop} [Decidable p] (h : p) (a b : α) :
+    (if p then a else b) = a := by simp [h]
+
 /-! ### Frame conditions -/
 
 /-- `T'` differs from `T` at most on tape `t` (contents and head). -/

@@ -26,7 +26,7 @@ An attempted formalization of **Savitch's theorem**:
 | 2. Space-accounted machine | `Space.savitch_machine`: an explicit stack machine decides reachability on `2^w` vertices using at most `(w+1)(4w+1)` bits | `Savitch/Space/StackMachine.lean` |
 | 3. NTMs and `NSPACE` | `NTM.accepts_iff_cfgGraph_Cs`: acceptance by an `s`-space NTM is reachability in a configuration graph on `2^(C·s)` vertices | `Savitch/Machine/NTM.lean` |
 | 4a. Main theorem (oracle-relative) | `savitch_relative` | `Savitch/Main.lean` |
-| 4b. True `DSPACE` via Turing machines | **in progress**: DTM model, `DSPACE`, a tape assembly language proved to compile to DTMs (`Code.mem_DSPACE`), verified `seq` / `ifElse` / `whileDo` combinators, the basic tape routines (scan, rewind, case split, block copy, increment and compare for binary and base-m blocks), and the configuration encoding with total decoding (`accepts_iff_vertex`). The edge-test program and the Savitch TM itself are not written yet | `Savitch/TM/` |
+| 4b. True `DSPACE` via Turing machines | **in progress**: DTM model, `DSPACE`, a tape assembly language proved to compile to DTMs (`Code.mem_DSPACE`), verified `seq` / `ifElse` / `whileDo` combinators, the basic tape routines (scan, rewind, case split, block copy, increment and compare for binary and base-m blocks), and the configuration encoding with total decoding (`accepts_iff_vertex`). plus the counter and input-head routines the edge test needs. The edge-test program itself and the Savitch TM are not written yet | `Savitch/TM/` |
 
 ### What is actually proved
 
@@ -60,6 +60,10 @@ Savitch/
   TM/Macros.lean            tape routines: scans, rewind, case split, symbol and block copy
   TM/Binary.lean            binary blocks: value, increment, in-place increment and compare routines
   TM/Digits.lean            base-m digit blocks: value, increment, compare routines (vertices on tape)
+  TM/Frame.lean             frame rule: code that does not touch a tape leaves it unchanged
+  TM/Counter.lean           binary decrement and zero test
+  TM/Track.lean             copying through a symbol map (extracting a track from records)
+  TM/Input.lean             counters with a home cell; position-tracked input head (inRight, inLeft, seekIn)
   Space/Generic.lean        the Phase 2 stack machine over any Fin N (correctness, stack depth)
   Machine/Encode.lean       total record encoding of configurations, acceptance as vertex reachability
 PLAN.md                     design plan and progress notes
