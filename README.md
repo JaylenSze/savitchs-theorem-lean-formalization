@@ -26,7 +26,7 @@ An attempted formalization of **Savitch's theorem**:
 | 2. Space-accounted machine | `Space.savitch_machine`: an explicit stack machine decides reachability on `2^w` vertices using at most `(w+1)(4w+1)` bits | `Savitch/Space/StackMachine.lean` |
 | 3. NTMs and `NSPACE` | `NTM.accepts_iff_cfgGraph_Cs`: acceptance by an `s`-space NTM is reachability in a configuration graph on `2^(C·s)` vertices | `Savitch/Machine/NTM.lean` |
 | 4a. Main theorem (oracle-relative) | `savitch_relative` | `Savitch/Main.lean` |
-| 4b. True `DSPACE` via Turing machines | **in progress**: DTM model, `DSPACE`, a tape assembly language proved to compile to DTMs (`Code.mem_DSPACE`), and verified `seq` / `ifElse` / `whileDo` combinators. The Savitch TM itself is not written yet | `Savitch/TM/` |
+| 4b. True `DSPACE` via Turing machines | **in progress**: DTM model, `DSPACE`, a tape assembly language proved to compile to DTMs (`Code.mem_DSPACE`), verified `seq` / `ifElse` / `whileDo` combinators, and the first tape routines (scan, rewind, case split, block copy). The Savitch TM itself is not written yet | `Savitch/TM/` |
 
 ### What is actually proved
 
@@ -57,6 +57,7 @@ Savitch/
   TM/DTM.lean               deterministic multi-tape TMs, DSPACE
   TM/Prog.lean              tape assembly language, compiled to DTMs (`Code.mem_DSPACE`)
   TM/Block.lean             verified composition: seq, ifElse, whileDo, space bounds
+  TM/Macros.lean            tape routines: scans, rewind, case split, symbol and block copy
 PLAN.md                     design plan and progress notes
 ```
 

@@ -6,3 +6,4 @@ import Savitch.Main
 import Savitch.TM.DTM
 import Savitch.TM.Prog
 import Savitch.TM.Block
+import Savitch.TM.Macros

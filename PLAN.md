@@ -24,10 +24,10 @@ The proof has one mathematical core, the midpoint recursion for reachability. Mo
 | Step | Content | Status |
 |---|---|---|
 | 4b-1 | `DTM` (read-only input + `k` work tapes), `DSPACE`; tape assembly language; `Code.mem_DSPACE` (programs are DTMs, via a step-for-step simulation); verified `seq` / `ifElse` / `whileDo` with space bounds; `Seg.reachable` | ✅ |
-| 4b-2 | Primitive macros with `Spec`s: rewind to the left-end marker, scan, copy a block between tapes, compare blocks, increment a mixed-radix block, unary counters | next |
+| 4b-2 | Primitive macros with `Spec`s. **Done** (`Savitch/TM/Macros.lean`): single instructions, `scanRight` / `scanLeft`, `rewind` to a left-end marker, finite case split `cases` (the pattern for compiling finite tables such as `δ`), `copySym`, and the lockstep block copy `copyWhile`. **Remaining**: compare two blocks, increment a block (binary or mixed-radix), unary counters | 🚧 |
 | 4b-3 | Data layout: an `M`-configuration is a block of `L` cells over a product alphabet (`Γ_M` symbol, head flag, one bit of the input-head position, state slot); a stack tape of frames `(a, b, c, phase)`; recursion depth stored as the head position on a unary depth tape | |
 | 4b-4 | Edge-test program: check that two blocks are valid configurations, move the input head to the binary-encoded position, check that some move in `δ` relates them; prove it equals `M.BStep` | |
-| 4b-5 | The Savitch program. Prove it **refines the Phase 2 stack machine** (an abstraction map from tapes to `Space.State`), so correctness and the `O(w²)` bound come from Phase 2 instead of being re-proved | |
+| 4b-5 | The Savitch program. Prove it **refines the Phase 2 stack machine** (an abstraction map from tapes to `Space.State`), so correctness comes from Phase 2 instead of being re-proved. For space, this also needs a new Phase 2 invariant: on every reachable state the stack has at most `K` frames (`frame.k + depth = K`). Then the tape length is `O(K · frame width)` | |
 | 4b-6 | Choosing `L`: start at `bits(n+2)` (count the input) and use the "iterate `L` until nothing exceeds it" trick, which needs no constructibility hypothesis. Fallback: assume constructibility | |
 | 4b-7 | Final theorem `NSPACE s ⊆ DSPACE (s²)` for `s ≥ log n` | |
 
