@@ -25,6 +25,13 @@ namespace Savitch.Edge
 
 open TM Machine Machine.NTM
 
+/-- Modes of the Savitch machine's main loop (`call`, `ret r`, `done r`). -/
+inductive Mode where
+  | call
+  | ret (r : Bool)
+  | done (r : Bool)
+  deriving DecidableEq, Fintype
+
 /-- The tape alphabet of the Savitch Turing machine. -/
 inductive Sym (Λ Γ : Type) where
   | blank
@@ -35,6 +42,7 @@ inductive Sym (Λ Γ : Type) where
   | no
   | rc (r : Rec Λ Γ)
   | key (q : Λ) (i : Option Bool) (g : Γ)
+  | md (m : Mode)
   deriving DecidableEq, Fintype
 
 variable {Λ Γ : Type} [Fintype Λ] [Fintype Γ] [DecidableEq Λ] [DecidableEq Γ]

@@ -74,6 +74,27 @@ theorem dval_dinc [NeZero m] :
       simp only [dval, dval_dinc l h', Fin.val_zero, Nat.mul_add, Nat.mul_one]
       omega
 
+/-- Increment wraps around: `dinc` adds one modulo `m ^ length`. -/
+theorem dval_dinc_mod [NeZero m] : ∀ l : List (Fin m), dval (dinc l) = (dval l + 1) % m ^ l.length
+  | [] => by simp [dval, dinc]
+  | d :: l => by
+    have hlt := dval_lt (d :: l)
+    unfold dinc
+    split_ifs with hd
+    · have hv := dval_lt l
+      have h1 : m * dval l + m ≤ m * m ^ l.length := by
+        have := Nat.mul_le_mul_left m (show dval l + 1 ≤ m ^ l.length from hv)
+        rwa [Nat.mul_add, Nat.mul_one] at this
+      simp only [dval, List.length_cons, Nat.pow_succ]
+      rw [Nat.mod_eq_of_lt (by rw [Nat.mul_comm (m ^ l.length) m]; omega)]
+      omega
+    · have hdm : d.val = m - 1 := by have := d.isLt; omega
+      have hpos : 0 < m := Nat.pos_of_neZero m
+      simp only [dval, dval_dinc_mod l, Fin.val_zero, Nat.zero_add, List.length_cons, Nat.pow_succ]
+      rw [show d.val + m * dval l + 1 = m * (dval l + 1) by
+        rw [hdm, Nat.mul_add, Nat.mul_one]; omega]
+      rw [Nat.mul_comm (m ^ l.length) m, Nat.mul_mod_mul_left]
+
 theorem dval_inj : ∀ {l₁ l₂ : List (Fin m)}, l₁.length = l₂.length → dval l₁ = dval l₂ → l₁ = l₂
   | [], [], _, _ => rfl
   | d₁ :: l₁, d₂ :: l₂, hl, h => by

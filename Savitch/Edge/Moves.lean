@@ -187,6 +187,7 @@ theorem Spec.markMove {A₁ A₂ G : Fin k} (h12 : A₁ ≠ A₂) (h1G : A₁ �
       T'.tp G (T.hd G) = (if moveWork w.val dw < L then .yes else .no) ∧
       (∀ hlt : moveWork w.val dw < L, LayW A₂ .mk T'
         ((List.ofFn fun j : Fin L => decide (j = ⟨moveWork w.val dw, hlt⟩)).map bit)) ∧
+      (∃ l : List Bool, LayW A₂ .mk T' (l.map bit) ∧ l.length = L) ∧
       T'.tp A₂ (L + 1) = T.tp A₂ (L + 1) ∧ T'.hd A₂ = 1 ∧
       T.Agree (fun i => i = A₂ ∨ i = G) T' ∧ T'.hd G = T.hd G ∧ T'.ih = T.ih ∧
       T'.Within B := by
@@ -387,8 +388,24 @@ theorem Spec.markMove {A₁ A₂ G : Fin k} (h12 : A₁ ≠ A₂) (h1G : A₁ �
       rw [Tapes.setHead_hd_ne _ _ (Ne.symm h12)] at h2
       exact hA₂cells j h1 (by omega))
     hW₄ (by omega)
-  refine ⟨T₄.setHead A₂ 1, (((s1.seq s2).seq s3).seq hh1).seq hh2, ?_, ?_, ?_, ?_, by simp, ?_,
-    ?_, ?_, Tapes.within_setHead hW₄ (by omega)⟩
+  have hbits : ∀ j : Fin L, T₃.tp A₂ (1 + j) = .z ∨ T₃.tp A₂ (1 + j) = .o := by
+    intro j
+    rw [hT₃A₂]
+    split_ifs
+    · simp only [Function.update_apply]; split_ifs
+      · exact Or.inr rfl
+      · exact Or.inl (hZcell j)
+    · exact Or.inl (hZcell j)
+  have hA₂0' : T₃.tp A₂ 0 = .mk := by
+    rw [hT₃A₂]; split_ifs
+    · rw [Function.update_of_ne (by omega)]; exact hA₂0
+    · exact hA₂0
+  have hA₂end' : T₃.tp A₂ (L + 1) = T₁.tp A₂ (L + 1) := by
+    rw [hT₃A₂]; split_ifs
+    · rw [Function.update_of_ne (by omega)]
+    · rfl
+  refine ⟨T₄.setHead A₂ 1, (((s1.seq s2).seq s3).seq hh1).seq hh2, ?_, ?_, ?_, ?_, ?_, by simp,
+    ?_, ?_, ?_, Tapes.within_setHead hW₄ (by omega)⟩
   · refine hA₁.congr ?_ ?_
     · simp only [T₄, Tapes.setHead_tp]; rw [hT₃A₁, hA₁tp₁]
     · rw [Tapes.setHead_hd_ne _ _ h12]; simp [T₄, hA₁.2.2.2]
@@ -411,9 +428,16 @@ theorem Spec.markMove {A₁ A₂ G : Fin k} (h12 : A₁ ≠ A₂) (h1G : A₁ �
     · simp only [T₄, Tapes.setHead_tp, List.length_map, List.length_ofFn]
       rw [hT₃A₂, ite_pos' hlt, Function.update_of_ne (by omega), hA₂end₁]
       have := hA₂.2.2.1; rwa [hl₂] at this
-  · simp only [T₄, Tapes.setHead_tp]; rw [hT₃A₂]; split_ifs
-    · rw [Function.update_of_ne (by omega), hA₂end₁]
-    · exact hA₂end₁
+  · refine ⟨List.ofFn (fun j : Fin L => decide (T₃.tp A₂ (1 + j) = .o)), ⟨?_, ?_, ?_, by simp⟩,
+      by simp⟩
+    · simp only [T₄, Tapes.setHead_tp]; exact hA₂0'
+    · simp only [T₄, Tapes.setHead_tp, List.length_map, List.length_ofFn]
+      rw [seg_ofFn, List.map_ofFn]
+      congr 1; funext j
+      rcases hbits j with h | h <;> simp [h, bit, bsym]
+    · simp only [T₄, Tapes.setHead_tp, List.length_map, List.length_ofFn]
+      rw [hA₂end', hA₂end₁]; have := hA₂.2.2.1; rwa [hl₂] at this
+  · simp only [T₄, Tapes.setHead_tp]; rw [hA₂end', hA₂end₁]
   · intro i hi
     have hi2 : i ≠ A₂ := fun h => hi (Or.inl h)
     have hiG : i ≠ G := fun h => hi (Or.inr h)
