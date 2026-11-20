@@ -157,6 +157,11 @@ theorem agree_lay {k : ℕ} {S' : Fin k → Prop} {T T' : Tapes k (Sym Λ Γ)}
     (hl : Lay t m₀ e₀ T l) : Lay t m₀ e₀ T' l :=
   hl.congr (h t ht).1 (h t ht).2
 
+theorem agree_layW {k : ℕ} {S' : Fin k → Prop} {T T' : Tapes k (Sym Λ Γ)}
+    (h : T.Agree S' T') {t : Fin k} (ht : ¬ S' t) {m₀ : Sym Λ Γ} {l : List (Sym Λ Γ)}
+    (hl : LayW t m₀ T l) : LayW t m₀ T' l :=
+  hl.congr (h t ht).1 (h t ht).2
+
 /-- A record-valued cell map keeps records records. -/
 def RecPres (F : Sym Λ Γ → Sym Λ Γ → Sym Λ Γ) : Prop := ∀ r b, ∃ r', F (.rc r) b = .rc r'
 
@@ -187,8 +192,8 @@ theorem Spec.buildS {U S A₁ A₂ P₂ : Fin k} (hUS : U ≠ S) (hS1 : S ≠ A�
     {ru : List (Rec Λ Γ)} {ls : List (Sym Λ Γ)}
     {m₁ m₂ m₃ : List Bool} {T : Tapes k (Sym Λ Γ)}
     (hU : Lay U .mk .blank T (ru.map .rc)) (hS : Lay S .mk .blank T ls)
-    (hA₁ : Lay A₁ .mk .blank T (m₁.map bit)) (hA₂ : Lay A₂ .mk .blank T (m₂.map bit))
-    (hP₂ : Lay P₂ .mk .blank T (m₃.map bit))
+    (hA₁ : LayW A₁ .mk T (m₁.map bit)) (hA₂ : LayW A₂ .mk T (m₂.map bit))
+    (hP₂ : LayW P₂ .mk T (m₃.map bit))
     (hls : ls.length = ru.length) (hm₁ : m₁.length = ru.length) (hm₂ : m₂.length = ru.length)
     (hm₃ : m₃.length = ru.length) (hT : T.Within B) (hB : ru.length + 2 ≤ B) :
     ∃ T', Spec (Edge.buildS q₂ g₂ U S A₁ A₂ P₂) x B T T' ∧
@@ -207,9 +212,9 @@ theorem Spec.buildS {U S A₁ A₂ P₂ : Fin k} (hUS : U ≠ S) (hS1 : S ≠ A�
     obtain ⟨r, _, rfl⟩ := List.mem_map.1 hg'
     exact ⟨_, rfl⟩
   have hl₁len : l₁.length = ru.length := by simp [l₁]
-  have hA₁₁ := agree_lay ag1 (Ne.symm hS1) hA₁
-  have hA₂₁ := agree_lay ag1 (Ne.symm hS2) hA₂
-  have hP₂₁ := agree_lay ag1 (Ne.symm hSP) hP₂
+  have hA₁₁ := agree_layW ag1 (Ne.symm hS1) hA₁
+  have hA₂₁ := agree_layW ag1 (Ne.symm hS2) hA₂
+  have hP₂₁ := agree_layW ag1 (Ne.symm hSP) hP₂
   -- pass 2: write `g₂` at the old head
   obtain ⟨T₂, s2, hS₂, _, ag2, ih2, hW₂⟩ := Spec.zipPass (x := x) (p := isRec) (F := F₂ g₂)
     hS1 hmb hS₁ hA₁₁ (by simp [hm₁, hl₁len]) hl₁.isRec rfl not_mk_bit
@@ -217,8 +222,8 @@ theorem Spec.buildS {U S A₁ A₂ P₂ : Fin k} (hUS : U ≠ S) (hS1 : S ≠ A�
   set l₂ := List.zipWith (F₂ g₂) l₁ (m₁.map bit)
   have hl₂ : AllRec l₂ := hl₁.zipWith (recPres_F₂ g₂)
   have hl₂len : l₂.length = ru.length := by simp [l₂, List.length_zipWith, hm₁, hl₁len]
-  have hA₂₂ := agree_lay ag2 (Ne.symm hS2) hA₂₁
-  have hP₂₂ := agree_lay ag2 (Ne.symm hSP) hP₂₁
+  have hA₂₂ := agree_layW ag2 (Ne.symm hS2) hA₂₁
+  have hP₂₂ := agree_layW ag2 (Ne.symm hSP) hP₂₁
   -- pass 3: set the new head flag
   obtain ⟨T₃, s3, hS₃, _, ag3, ih3, hW₃⟩ := Spec.zipPass (x := x) (p := isRec) (F := F₃)
     hS2 hmb hS₂ hA₂₂ (by simp [hm₂, hl₂len]) hl₂.isRec rfl not_mk_bit
@@ -226,7 +231,7 @@ theorem Spec.buildS {U S A₁ A₂ P₂ : Fin k} (hUS : U ≠ S) (hS1 : S ≠ A�
   set l₃ := List.zipWith F₃ l₂ (m₂.map bit)
   have hl₃ : AllRec l₃ := hl₂.zipWith recPres_F₃
   have hl₃len : l₃.length = ru.length := by simp [l₃, List.length_zipWith, hm₂, hl₂len]
-  have hP₂₃ := agree_lay ag3 (Ne.symm hSP) hP₂₂
+  have hP₂₃ := agree_layW ag3 (Ne.symm hSP) hP₂₂
   -- pass 4: copy the input-position bits
   obtain ⟨T₄, s4, hS₄, _, ag4, ih4, hW₄⟩ := Spec.zipPass (x := x) (p := isRec) (F := F₄)
     hSP hmb hS₃ hP₂₃ (by simp [hm₃, hl₃len]) hl₃.isRec rfl not_mk_bit

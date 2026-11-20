@@ -63,9 +63,11 @@ Savitch/
   TM/Frame.lean             frame rule: code that does not touch a tape leaves it unchanged
   TM/Counter.lean           binary decrement and zero test
   TM/Track.lean             copying through a symbol map; in-place lockstep zip
-  TM/Input.lean             counters with a home cell; position-tracked input head (inRight, inLeft, seekIn)
+  TM/Input.lean             counters with a home cell; position-tracked input head (inRight, inLeft, seekIn, rewindIn)
   TM/Layout.lean            block layout and whole-block copy / zip passes
   Edge/Build.lean           the Savitch TM alphabet; building a successor's encoding on tape
+  Edge/Mark.lean            marking the decoded work head of a vertex block
+  Edge/Moves.lean           per-move pieces: moved input position, moved head mark
   Space/Generic.lean        the Phase 2 stack machine over any Fin N (correctness, stack depth)
   Machine/Encode.lean       total record encoding of configurations, acceptance as vertex reachability
   Machine/Next.lean         successor function nextB; generated-edge graph; accepts_iff_gen

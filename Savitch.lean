@@ -18,3 +18,5 @@ import Savitch.TM.Input
 import Savitch.Machine.Next
 import Savitch.TM.Layout
 import Savitch.Edge.Build
+import Savitch.Edge.Mark
+import Savitch.Edge.Moves

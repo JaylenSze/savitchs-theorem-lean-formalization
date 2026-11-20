@@ -403,4 +403,58 @@ theorem Spec.seekIn {C P F : Fin k} (hCP : C ≠ P) (hCF : C ≠ F) (hPF : P ≠
   refine ⟨T', lp', lc', s0.seq (Spec.whileDo hloop), hP', hlen', by rw [hih', q7], hC', hlenc',
     hz', (q6.mono (fun _ h => h.elim Or.inl (fun h => Or.inr (Or.inr h)))).trans hag', by rw [hF', q5], hW'⟩
 
+/-! ### Rewinding the input head to position 0 -/
+
+def rewindBody (P F : Fin k) (mk z o yes no : Γ) : Code k Γ :=
+  TM.inLeft P F mk z o yes no ++ TM.isZeroH P F mk z o yes no
+
+/-- Move the input head back to position 0, keeping `P` equal to its position. -/
+def rewindIn (P F : Fin k) (mk z o yes no : Γ) : Code k Γ :=
+  TM.isZeroH P F mk z o yes no ++
+    whileDo (.tape F (fun g => decide (g = no))) (rewindBody P F mk z o yes no)
+
+theorem rewind_aux {P F : Fin k} (hPF : P ≠ F) (hzo : z ≠ o) (hmz : mk ≠ z) (hmo : mk ≠ o)
+    {yes no : Γ} (hyn : yes ≠ no) :
+    ∀ (c : ℕ) (lp : List Bool) (T : Tapes k Γ), T.ih = c → InPos P mk z o x T lp →
+      T.read F = (if c = 0 then yes else no) → T.Within B → lp.length + 2 ≤ B →
+      ∃ T' lp', Loop (.tape F (fun g => decide (g = no))) (rewindBody P F mk z o yes no)
+          x B T T' ∧ InPos P mk z o x T' lp' ∧ lp'.length = lp.length ∧ T'.ih = 0 ∧
+        T.Agree (fun i => i = P ∨ i = F) T' ∧ T'.hd F = T.hd F ∧ T'.Within B
+  | 0, lp, T, hc, hP, hF, hT, _ => by
+    exact ⟨T, lp, .stop (by simp [Cond.eval, hF, hyn]) hT, hP, rfl, hc,
+      Tapes.Agree.refl _ T, rfl, hT⟩
+  | c + 1, lp, T, hc, hP, hF, hT, hBp => by
+    obtain ⟨T₁, lp₁, s1, hP₁, hlen₁, hih₁, hag₁, hF₁, hW₁⟩ :=
+      Spec.inLeft (x := x) (yes := yes) (no := no) hPF hzo hmz hmo hyn hP hT hBp
+    obtain ⟨T₂, s2, ⟨q1, q2, q3, q4, q5, q6, q7⟩, hW₂⟩ :=
+      Spec.isZeroH (x := x) (yes := yes) (no := no) (f := F) hPF hzo hmz hmo hP₁.1 hW₁
+        (by rw [hlen₁]; exact hBp)
+    have hP₂ : InPos P mk z o x T₂ lp₁ :=
+      ⟨hP₁.1.congr q3 q4, by rw [q7]; exact hP₁.2.1, by rw [q7]; exact hP₁.2.2.1, hP₁.2.2.2⟩
+    have hih₂ : T₂.ih = c := by rw [q7, hih₁, hc]; simp [Machine.moveIn]
+    have hF₂ : T₂.read F = (if c = 0 then yes else no) := by
+      rw [Tapes.read, q5, q1, hP₁.2.1, hih₁, hc]; simp [Machine.moveIn]
+    obtain ⟨T', lp', hloop, hP', hlen', hih', hag', hF', hW'⟩ :=
+      rewind_aux hPF hzo hmz hmo hyn c lp₁ T₂ hih₂ hP₂ hF₂ hW₂ (by rw [hlen₁]; exact hBp)
+    refine ⟨T', lp', .iter (by simp [Cond.eval, hF]) hT (s1.seq s2) hloop, hP',
+      by rw [hlen', hlen₁], hih', (hag₁.trans q6).trans hag', ?_, hW'⟩
+    rw [hF', q5, hF₁]
+
+/-- **Rewind.** The input head returns to position 0, with `P` tracking it. -/
+theorem Spec.rewindIn {P F : Fin k} (hPF : P ≠ F) (hzo : z ≠ o) (hmz : mk ≠ z) (hmo : mk ≠ o)
+    {yes no : Γ} (hyn : yes ≠ no) {lp : List Bool} {T : Tapes k Γ}
+    (hP : InPos P mk z o x T lp) (hT : T.Within B) (hBp : lp.length + 2 ≤ B) :
+    ∃ T' lp', Spec (TM.rewindIn P F mk z o yes no) x B T T' ∧ InPos P mk z o x T' lp' ∧
+      lp'.length = lp.length ∧ T'.ih = 0 ∧ T.Agree (fun i => i = P ∨ i = F) T' ∧
+      T'.hd F = T.hd F ∧ T'.Within B := by
+  obtain ⟨T₀, s0, ⟨q1, q2, q3, q4, q5, q6, q7⟩, hW₀⟩ :=
+    Spec.isZeroH (x := x) (yes := yes) (no := no) (f := F) hPF hzo hmz hmo hP.1 hT hBp
+  have hP₀ : InPos P mk z o x T₀ lp :=
+    ⟨hP.1.congr q3 q4, by rw [q7]; exact hP.2.1, by rw [q7]; exact hP.2.2.1, hP.2.2.2⟩
+  obtain ⟨T', lp', hloop, hP', hlen', hih', hag', hF', hW'⟩ :=
+    rewind_aux hPF hzo hmz hmo hyn T₀.ih lp T₀ rfl hP₀
+      (by rw [Tapes.read, q5, q1, hP.2.1, q7]) hW₀ hBp
+  exact ⟨T', lp', s0.seq (Spec.whileDo hloop), hP', hlen', hih', q6.trans hag',
+    by rw [hF', q5], hW'⟩
+
 end Savitch.TM
